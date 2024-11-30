@@ -1,9 +1,19 @@
 const sendgrid = require("@sendgrid/mail");
 
-// Set the SendGrid API Key
-sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
+const AWS = require('aws-sdk');
+const secretsManager = new AWS.SecretsManager();
 
 exports.handler = async (event) => {
+
+  const secretValue = await secretsManager.getSecretValue({
+    SecretId: "email-service-credentials",
+  }).promise();
+
+  const { sendgrid_api_key } = JSON.parse(secretValue.SecretString);
+
+  // Set the SendGrid API Key
+  sendgrid.setApiKey(sendgrid_api_key);
+
   // Extract SNS message
   const snsMessage = event.Records[0].Sns.Message;
   const userData = JSON.parse(snsMessage);
